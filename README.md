@@ -2,7 +2,7 @@
 
 [Русская версия](README.ru.md)
 
-Semester research project (NIR) started from the [lab template](https://github.com/Industrial-AI-Research-Lab/nir-project-template). Replace this paragraph with the purpose of the project: the question, the data, the expected result.
+Semester research project (NIR) started from the [lab template](https://github.com/Industrial-AI-Research-Lab/motallebzadeh-nir-template). Replace this paragraph with the purpose of the project: the question, the data, the expected result.
 
 ## Quick start
 

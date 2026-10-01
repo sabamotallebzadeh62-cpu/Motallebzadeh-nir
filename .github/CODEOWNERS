@@ -1,3 +1,4 @@
 # Requests a review from the supervisor when a PR leaves Draft. Works after this file is merged
 # into main and, on the Free plan, only in a public repository. Replace the handle.
 * @supervisor-handle
+* @Resurrectiontent

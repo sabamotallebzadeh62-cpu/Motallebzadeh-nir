@@ -2,7 +2,7 @@
 
 [English version](README.md)
 
-Семестровая НИР, начатая с [шаблона лаборатории](https://github.com/Industrial-AI-Research-Lab/nir-project-template). Замените этот абзац описанием проекта: вопрос, данные, ожидаемый результат.
+Семестровая НИР, начатая с [шаблона лаборатории](https://github.com/Industrial-AI-Research-Lab/motallebzadeh-nir-template). Замените этот абзац описанием проекта: вопрос, данные, ожидаемый результат.
 
 ## Быстрый старт
 
