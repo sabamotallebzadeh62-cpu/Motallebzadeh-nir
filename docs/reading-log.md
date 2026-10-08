@@ -2,6 +2,29 @@
 
 One row per paper read. Keep the columns: the supervisor checks this table at the checkpoint.
 
+## Search log
+
+- Search date: 2026-10-07
+- Queries:
+  - KGGen extracting knowledge graphs from plain text with language models
+  - EDC Extract-Define-Canonicalize framework knowledge graph construction LLM
+  - SocraticKG knowledge graph construction question-guided
+  - GraphJudge knowledge graph construction LLM graph judgment multi-agent
+  - KARMA multi-agent LLMs automated knowledge graph enrichment
+  - multi-agent vs single-agent LLM knowledge graph construction token cost budget comparison
+  - LLM knowledge graph extraction verification hallucination triples evaluation cost-quality 2026
+
+## Papers
+
 | Citation | Year | Paper's question | Method | Findings | Link to my work | My assessment |
 |---|---|---|---|---|---|---|
-| Author et al. | 2024 | … | … | … | … | … |
+| Mo et al., KGGen: Extracting Knowledge Graphs from Plain Text with Language Models (screened), arXiv 2502.09956, https://arxiv.org/abs/2502.09956 | 2025 | Can LMs extract dense, high-quality KGs from plain text? | abstract only: LM extraction plus entity and edge clustering; releases MINE benchmark | Authors report better information retention than GraphRAG on MINE | Candidate baseline and benchmark | not assessed yet |
+| Zhang and Soh, Extract, Define, Canonicalize: An LLM-based Framework for KG Construction (screened), arXiv 2404.03868, https://arxiv.org/abs/2404.03868 | 2024 | How to build KGs with LLMs when the schema is too large for the prompt? | abstract only: three phases (open extraction, schema definition, canonicalization), optional schema retriever | Authors report high-quality triplets on three KGC benchmarks without parameter tuning | Staged decomposition of extraction | not assessed yet |
+| Choi et al., SocraticKG: Knowledge Graph Construction via QA-Driven Fact Extraction (screened), arXiv 2601.10003, https://arxiv.org/abs/2601.10003 | 2026 | How to balance factual coverage and graph connectivity in LLM-based KG construction? | abstract only: 5W1H-guided QA pairs as intermediate representation, then triple extraction and canonicalization | Authors report gains on MINE and HotpotQA | Staged pipeline evaluated on MINE | not assessed yet |
+| Huang et al., Can LLMs be Good Graph Judge for Knowledge Graph Construction? (screened), arXiv 2411.17388 (title differs between versions: Judger vs Judge), https://arxiv.org/abs/2411.17388 | 2025 | Can a fine-tuned LLM verify triples to reduce noise and hallucination? | abstract only: entity-centric text denoising, instruction tuning, graph judgement module | Authors report state-of-the-art results on two general and one domain-specific dataset | Verification role | not assessed yet |
+| Lu and Wang, KARMA: Leveraging Multi-Agent LLMs for Automated Knowledge Graph Enrichment (screened), arXiv 2502.06472, https://arxiv.org/abs/2502.06472 | 2025 | Can multi-agent LLMs automate KG enrichment from scientific text? | abstract only: nine collaborative agents (entity discovery, relation extraction, schema alignment, conflict resolution) | Authors report 83.1% LLM-verified correctness on 1,200 PubMed articles | Role-based multi-agent extraction | not assessed yet |
+| MAGG, From Extraction to Governed Memory: Multi-Agent Knowledge Graph Construction with Domain-Expert Review (screened), arXiv 2608.28642 (authors not verified), https://arxiv.org/abs/2608.28642 | 2026 | Can governance and review agents make multi-agent KG construction cleaner and auditable? | abstract only: multi-agent build plus domain-expert governance review | Reports token cost tables, e.g. about 80k tokens per doc for MAGG vs about 29k for flat extraction on SciERC | Token and cost accounting | not assessed yet |
+| Tran et al., Single-Agent LLMs Outperform Multi-Agent Systems on Multi-Hop Reasoning Under Equal Thinking Token Budgets (screened), arXiv 2604.02460, https://arxiv.org/abs/2604.02460 | 2026 | Are multi-agent gains explained by extra computation? | abstract only: information-theoretic argument plus equal-budget comparison on multi-hop reasoning | Authors report single-agent matches or beats multi-agent at equal token budget | Budget-controlled comparison (reasoning, not KG extraction) | not assessed yet |
+| Phase Transition for Budgeted Multi-Agent Synergy (screened), arXiv 2601.17311 (authors not verified), https://arxiv.org/abs/2601.17311 | 2026 | When does a multi-agent system beat the best single agent under the same total budget? | abstract only: theory of fixed-budget comparison with explicit communication cost | not reported | Fixed-budget framing | not assessed yet |
+| Wesslund et al., LLM-based Triplet Extraction from Financial Reports (screened), arXiv 2602.11886, https://arxiv.org/abs/2602.11886 | 2026 | How to evaluate triplet extraction without ground truth? | abstract only: ontology conformance and faithfulness proxies, regex plus LLM-as-a-judge verification | Authors report apparent subject hallucination rate dropping from 65.2% to 1.6% | Verification and evaluation without gold data | not assessed yet |
+| Ilves et al., Large Language Models for Knowledge Graph Extraction: A Schema-Constrained Evaluation Framework (screened), KG-LLM workshop at LREC26 | 2026 | How to evaluate LLM extraction of complete typed graphs? | abstract only: schema-injected prompts, single-step vs two-step extraction, repeated-run stability on DocRED | Authors report automatic triple F1 underestimates quality because gold annotations are incomplete | Evaluation design and repeated runs | not assessed yet |
