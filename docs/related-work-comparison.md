@@ -40,7 +40,7 @@ My assessment (to be checked against the papers):
 
 Open question: under an equal token budget, same backbone and repeated runs, does role-based decomposition beat a single-agent extractor on KG quality? Related budget-controlled evidence exists for multi-hop reasoning (Tran et al., abstract only), but I did not identify such a comparison for KG extraction among the papers reviewed.
 
-## Slide version (2 to 3 sentences)
+## Slide version (compact table + short summary)
 
 | Work | Structure | Models | Token cost reported | Repeats | Main caveat |
 |---|---|---|---|---|---|
