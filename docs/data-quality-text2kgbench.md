@@ -20,6 +20,19 @@ not authorize changes to, or redistribution of, the raw dataset.
   `ont_16_city_test.jsonl`.
 - Sentence overlap checks alone do not establish source-group independence.
 
+## Upstream version check
+
+The file `data/dbpedia_webnlg/test/ont_16_city_test.jsonl` was compared
+between the `iswc_2023_submission` tag (`f4a669e622b4d5078030cca65778235433db30f4`)
+and the checked-out `HEAD` (`50a3d255371b8817cdff70fd88459ac82b339cfe`).
+Git reported the same blob hash for both versions:
+`e992ad0b0ddc032555ea98ccaa08c1a6f3b6cdba`.
+
+Therefore, the inspected file is byte-for-byte identical in these two
+revisions, and the repeated sentence groups were already present in the
+tagged ISWC 2023 submission. This confirms their presence in that revision,
+but does not establish whether their differing gold annotations are correct.
+
 ## Repeated test sentences requiring review
 
 ### 1. Atlanta / DeKalb County
