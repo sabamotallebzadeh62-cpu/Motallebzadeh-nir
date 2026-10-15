@@ -6,6 +6,7 @@ A wrong value fails at start, not in the middle of a run.
 
 from pathlib import Path
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -19,6 +20,13 @@ class Settings(BaseSettings):
     seed: int = 42
     data_dir: Path = Path("data")
     results_dir: Path = Path("results")
+
+    llm_base_url: str = ""
+    llm_api_key: SecretStr = SecretStr("")
+    extractor_model: str = "qwen2.5-72b"
+    judge_model: str = "gpt-oss-120b"
+    llm_timeout_s: float = 60.0
+    llm_max_retries: int = 2
 
 
 def load_settings() -> Settings:
