@@ -71,3 +71,31 @@ def test_ok_result_with_triple() -> None:
         usage=Usage(input_tokens=10, output_tokens=5),
     )
     assert len(result.triples) == 1
+
+
+
+def test_triple_id_distinguishes_delimiter_collisions() -> None:
+    first = make_triple_id("d1", "a|b", "c", "d")
+    second = make_triple_id("d1", "a", "b|c", "d")
+
+    assert first != second
+
+
+def test_result_rejects_triple_from_different_document() -> None:
+    triple = Triple(
+        triple_id=make_triple_id("d2", "Alice", "knows", "Bob"),
+        document_id="d2",
+        subject="Alice",
+        predicate="knows",
+        object="Bob",
+    )
+
+    with pytest.raises(ValidationError):
+        ExtractionResult(
+            document_id="d1",
+            chunk_id="c1",
+            model_id="m",
+            status=Status.OK,
+            triples=[triple],
+        )
+
