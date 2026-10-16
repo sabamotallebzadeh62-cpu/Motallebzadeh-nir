@@ -27,7 +27,6 @@ class Chunk(BaseModel):
     text: str = Field(min_length=1)
 
 
-
 def make_triple_id(document_id: str, subject: str, predicate: str, obj: str) -> str:
     """Stable ID: the same document and triple always give the same ID."""
     import json
@@ -35,6 +34,7 @@ def make_triple_id(document_id: str, subject: str, predicate: str, obj: str) -> 
     parts = [part.strip().lower() for part in (document_id, subject, predicate, obj)]
     key = json.dumps(parts, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha1(key.encode("utf-8")).hexdigest()[:12]
+
 
 class Triple(BaseModel):
     """One extracted fact, with optional source evidence."""
@@ -79,8 +79,6 @@ class ExtractionResult(BaseModel):
 
         for triple in self.triples:
             if triple.document_id != self.document_id:
-                raise ValueError(
-                    "triple document_id must match result document_id"
-                )
+                raise ValueError("triple document_id must match result document_id")
 
         return self

@@ -73,7 +73,6 @@ def test_ok_result_with_triple() -> None:
     assert len(result.triples) == 1
 
 
-
 def test_triple_id_distinguishes_delimiter_collisions() -> None:
     first = make_triple_id("d1", "a|b", "c", "d")
     second = make_triple_id("d1", "a", "b|c", "d")
@@ -98,4 +97,3 @@ def test_result_rejects_triple_from_different_document() -> None:
             status=Status.OK,
             triples=[triple],
         )
-
