@@ -27,11 +27,14 @@ class Chunk(BaseModel):
     text: str = Field(min_length=1)
 
 
+
 def make_triple_id(document_id: str, subject: str, predicate: str, obj: str) -> str:
     """Stable ID: the same document and triple always give the same ID."""
-    key = "|".join(part.strip().lower() for part in (document_id, subject, predicate, obj))
-    return hashlib.sha1(key.encode("utf-8")).hexdigest()[:12]
+    import json
 
+    parts = [part.strip().lower() for part in (document_id, subject, predicate, obj)]
+    key = json.dumps(parts, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha1(key.encode("utf-8")).hexdigest()[:12]
 
 class Triple(BaseModel):
     """One extracted fact, with optional source evidence."""
@@ -65,6 +68,8 @@ class ExtractionResult(BaseModel):
     usage: Usage = Field(default_factory=Usage)
 
     @model_validator(mode="after")
+    
+    @model_validator(mode="after")
     def _check_status(self) -> "ExtractionResult":
         if self.status is Status.FAILED:
             if not self.error:
@@ -73,4 +78,11 @@ class ExtractionResult(BaseModel):
                 raise ValueError("a failed result must not contain triples")
         elif self.error is not None:
             raise ValueError("an ok result must not have an error")
+
+        for triple in self.triples:
+            if triple.document_id != self.document_id:
+                raise ValueError(
+                    "triple document_id must match result document_id"
+                )
+
         return self
