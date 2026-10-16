@@ -67,7 +67,6 @@ class ExtractionResult(BaseModel):
     error: str | None = None
     usage: Usage = Field(default_factory=Usage)
 
-    @model_validator(mode="after")
     
     @model_validator(mode="after")
     def _check_status(self) -> "ExtractionResult":
