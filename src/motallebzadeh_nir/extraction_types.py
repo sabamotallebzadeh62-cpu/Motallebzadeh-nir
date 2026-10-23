@@ -66,6 +66,7 @@ class ExtractionResult(BaseModel):
     triples: list[Triple] = Field(default_factory=list)
     error: str | None = None
     usage: Usage = Field(default_factory=Usage)
+    usage_complete: bool = True  # False if any request's consumption is unknown
 
     @model_validator(mode="after")
     def _check_status(self) -> "ExtractionResult":
