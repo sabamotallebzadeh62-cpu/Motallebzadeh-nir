@@ -185,6 +185,7 @@ def _failed(
     kind: FailureKind,
     message: str,
     attempts: int,
+    usage_complete: bool = True,
 ) -> ExtractionRecord:
     result = ExtractionResult(
         document_id=chunk.document_id,
@@ -193,6 +194,7 @@ def _failed(
         status=Status.FAILED,
         error=f"{kind.value}: {message}",
         usage=usage or Usage(),
+        usage_complete=usage_complete,
     )
     return ExtractionRecord(result, tuple(raws), kind, attempts)
 
@@ -219,7 +221,16 @@ def extract(
             )
         except openai.OpenAIError as exc:
             message = f"{type(exc).__name__}: {exc}"
-            return _failed(chunk, settings, raws, total, FailureKind.API_ERROR, message, attempt)
+            return _failed(
+                chunk,
+                settings,
+                raws,
+                total,
+                FailureKind.API_ERROR,
+                message,
+                attempt,
+                usage_complete=False,
+            )
 
         used = _usage(response)
         total = used if total is None else add_usage(total, used)

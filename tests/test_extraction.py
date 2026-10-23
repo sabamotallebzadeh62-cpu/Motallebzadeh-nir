@@ -158,6 +158,26 @@ def test_extract_api_error_is_recorded() -> None:
     assert "boom" in record.result.error
 
 
+def test_api_error_after_reported_usage_is_marked_incomplete() -> None:
+    client, comps = make_client(
+        [response("oops", tokens=(10, 5)), openai.APITimeoutError(request=cast(Any, None))]
+    )
+    record = extract(client, CHUNK, CFG, settings())
+    assert record.result.status is Status.FAILED
+    assert record.failure_kind is FailureKind.API_ERROR
+    assert record.attempts == 2
+    assert record.result.usage.input_tokens == 10
+    assert record.result.usage.output_tokens == 5
+    assert record.result.usage_complete is False
+    assert len(comps.calls) == 2
+
+
+def test_usage_is_complete_when_every_request_reported() -> None:
+    client, _ = make_client([response("oops", tokens=(10, 5)), response(GOOD, tokens=(20, 6))])
+    record = extract(client, CHUNK, CFG, settings())
+    assert record.result.usage_complete is True
+
+
 def test_unknown_usage_stays_unknown() -> None:
     client, _ = make_client([response(GOOD, tokens=None)])
     record = extract(client, CHUNK, CFG, settings())

@@ -75,7 +75,10 @@ def summarize(records: list[ExtractionRecord]) -> dict[str, float]:
     """Counts for MLflow. Unknown token usage is counted apart, never added as 0."""
     kinds = Counter(r.failure_kind.value for r in records if r.failure_kind is not None)
     unknown = sum(
-        r.result.usage.input_tokens is None or r.result.usage.output_tokens is None for r in records
+        not r.result.usage_complete
+        or r.result.usage.input_tokens is None
+        or r.result.usage.output_tokens is None
+        for r in records
     )
     metrics: dict[str, float] = {
         "n_chunks": len(records),
