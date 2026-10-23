@@ -121,6 +121,8 @@ def run_extraction(
             }
         )
         prompt_sha = hashlib.sha256(cfg.system_prompt().encode("utf-8")).hexdigest()[:12]
+        input_bytes = Path(cfg.input_path).read_bytes()
+        input_sha = hashlib.sha256(input_bytes).hexdigest()
         mlflow.log_params(
             {
                 "seed": settings.seed,
@@ -130,12 +132,37 @@ def run_extraction(
                 "timeout_s": settings.llm_timeout_s,
                 "sdk_max_retries": settings.llm_max_retries,
                 "prompt_sha256": prompt_sha,
+                "input_sha256": input_sha,
+                "input_bytes": len(input_bytes),
                 "input_path": cfg.input_path,
                 "n_allowed_predicates": len(cfg.allowed_predicates),
             }
         )
         if config_path is not None:
             mlflow.log_artifact(str(config_path))
+        effective = {
+            "name": cfg.name,
+            "stage": cfg.stage,
+            "dataset": cfg.dataset,
+            "model_family": cfg.model_family,
+            "input_path": cfg.input_path,
+            "input_sha256": input_sha,
+            "model_id": settings.extractor_model,
+            "seed": settings.seed,
+            "max_tokens": cfg.max_tokens,
+            "temperature": cfg.temperature,
+            "timeout_s": settings.llm_timeout_s,
+            "sdk_max_retries": settings.llm_max_retries,
+            "allowed_predicates": list(cfg.allowed_predicates),
+            "prompt_sha256": prompt_sha,
+            "system_prompt": cfg.system_prompt(),
+        }
+        effective_path = settings.data_dir / "logs" / run_id / "effective_config.json"
+        effective_path.parent.mkdir(parents=True, exist_ok=True)
+        effective_path.write_text(
+            json.dumps(effective, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        mlflow.log_artifact(str(effective_path))
 
         raw_path = settings.data_dir / "logs" / run_id / "extraction_raw.jsonl"
         raw_path.parent.mkdir(parents=True, exist_ok=True)

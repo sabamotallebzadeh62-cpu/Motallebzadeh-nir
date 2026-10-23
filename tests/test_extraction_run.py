@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
 
+import mlflow
 import openai
 import pytest
 from openai import OpenAI
@@ -135,3 +137,40 @@ def test_main_reports_missing_api_access(tmp_path: Path, monkeypatch: pytest.Mon
     )
     with pytest.raises(ValueError, match="LLM_BASE_URL"):
         main(["--config", str(config)])
+
+
+def test_run_keeps_input_checksum_and_effective_config(tmp_path: Path) -> None:
+    chunks = tmp_path / "chunks.jsonl"
+    write_chunks(chunks, 1)
+    cfg = make_cfg(chunks)
+    result = run_extraction(cfg, make_settings(tmp_path), client=fake_client([reply(GOOD)]))
+
+    expected = hashlib.sha256(chunks.read_bytes()).hexdigest()
+    params = mlflow.get_run(result.run_id).data.params
+    assert params["input_sha256"] == expected
+    assert params["input_bytes"] == str(chunks.stat().st_size)
+
+    effective_path = result.raw_path.parent / "effective_config.json"
+    text = effective_path.read_text(encoding="utf-8")
+    effective = json.loads(text)
+    assert effective["input_sha256"] == expected
+    assert effective["system_prompt"] == cfg.system_prompt()
+    assert effective["model_id"] == make_settings(tmp_path).extractor_model
+    assert "http://fake" not in text
+
+
+def test_changed_input_changes_checksum(tmp_path: Path) -> None:
+    chunks = tmp_path / "chunks.jsonl"
+    write_chunks(chunks, 1)
+    first = run_extraction(
+        make_cfg(chunks), make_settings(tmp_path), client=fake_client([reply(GOOD)])
+    )
+    write_chunks(chunks, 2)
+    second = run_extraction(
+        make_cfg(chunks),
+        make_settings(tmp_path),
+        client=fake_client([reply(GOOD), reply(GOOD)]),
+    )
+    first_sha = mlflow.get_run(first.run_id).data.params["input_sha256"]
+    second_sha = mlflow.get_run(second.run_id).data.params["input_sha256"]
+    assert first_sha != second_sha
