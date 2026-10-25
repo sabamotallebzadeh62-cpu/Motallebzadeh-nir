@@ -33,3 +33,7 @@ CLAUDE.local.md
 .idea/
 .vscode/
 .DS_Store
+
+# Generated MINE evaluator run reports
+results/*
+!results/README.md
