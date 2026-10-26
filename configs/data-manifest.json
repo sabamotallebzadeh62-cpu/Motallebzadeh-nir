@@ -1,0 +1,824 @@
+{
+  "manifest_version": 1,
+  "status": "proposal; ontology choice pending curator approval",
+  "dataset": {
+    "name": "Text2KGBench, DBpedia-WebNLG part",
+    "source": "https://github.com/cenguix/Text2KGBench",
+    "commit": "50a3d255371b8817cdff70fd88459ac82b339cfe",
+    "data_license_note": "Derived from WebNLG 3.0 (CC BY-NC-SA 4.0); treat as research use only."
+  },
+  "seed": 42,
+  "ontologies": [
+    "ont_3_airport",
+    "ont_4_building",
+    "ont_5_athlete",
+    "ont_11_meanoftransportation",
+    "ont_8_celestialbody"
+  ],
+  "selection_rule": "dev: 6 random train sentences per ontology; eval: 20 random test sentences per ontology, excluding those sharing a subject entity with a dev item of the same ontology.",
+  "group_rule": "group_id approximated as ontology plus the alphabetically smallest subject entity; upstream files have no original WebNLG IDs.",
+  "counts": {
+    "dev": 30,
+    "eval": 100
+  },
+  "limitations": [
+    "Only Text2KGBench DBpedia-WebNLG is covered; MINE and WebNLG are not included.",
+    "Cross-benchmark overlap with WebNLG has not been checked.",
+    "group_id is an approximation of source groups.",
+    "Ontology choice is a proposal pending curator approval."
+  ],
+  "file_sha256": {
+    "data/dbpedia_webnlg/train/ont_3_airport_train.jsonl": "5e1220135cb1a3f59a5be3d584da195cef55ef46eefcd14039d8d59477d37a1b",
+    "data/dbpedia_webnlg/ground_truth/ont_3_airport_ground_truth.jsonl": "82e9e31cc2a30d257e66e4cd6cb8b81811b39ab3aa5e666e0284e48ffa3bca4f",
+    "data/dbpedia_webnlg/train/ont_4_building_train.jsonl": "8855d8e79b0f75665ac24b874c2d2e822807fe3dfa899b1782382d572871d41d",
+    "data/dbpedia_webnlg/ground_truth/ont_4_building_ground_truth.jsonl": "eed69b372e89c2646bfaa17c05c707ba676c9d9d44a7e3cc161af2fdaac9304a",
+    "data/dbpedia_webnlg/train/ont_5_athlete_train.jsonl": "b66228f02e97150412418393f82f03ff0f02c843691eb82313611472c4a718bb",
+    "data/dbpedia_webnlg/ground_truth/ont_5_athlete_ground_truth.jsonl": "674a64828f5c390f40a35d152d04ced5ebc6c180d8ea7094c4ca4b87c5d3e01d",
+    "data/dbpedia_webnlg/train/ont_11_meanoftransportation_train.jsonl": "7eb28644616f66d5e4a08a99ee6174fdde9e08973b4a4cb7550af23f5dc5123e",
+    "data/dbpedia_webnlg/ground_truth/ont_11_meanoftransportation_ground_truth.jsonl": "94575fa76a202e542647e85b950ff127cd2f4d903d13a556bab384caabba7fdc",
+    "data/dbpedia_webnlg/train/ont_8_celestialbody_train.jsonl": "dd5c3d4b1e20fc27b091844284218d97d86c4580fbdf17155ebe3a61f4ecc344",
+    "data/dbpedia_webnlg/ground_truth/ont_8_celestialbody_ground_truth.jsonl": "b1060b69c3640355cc5b22779fdb222620bf21fa89081283baa5daa172b2dc45"
+  },
+  "items": [
+    {
+      "split": "dev",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_train_141",
+      "group_id": "ont_3_airport:Bedford_Aerodrome"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_train_20",
+      "group_id": "ont_3_airport:Adolfo_Suárez_Madrid–Barajas_Airport"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_train_28",
+      "group_id": "ont_3_airport:Adolfo_Suárez_Madrid–Barajas_Airport"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_train_58",
+      "group_id": "ont_3_airport:Allama_Iqbal_International_Airport"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_train_64",
+      "group_id": "ont_3_airport:Andrews_County_Airport"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_train_95",
+      "group_id": "ont_3_airport:Ashgabat_International_Airport"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_train_103",
+      "group_id": "ont_4_building:Asser_Levy_Public_Baths"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_train_11",
+      "group_id": "ont_4_building:200_Public_Square"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_train_127",
+      "group_id": "ont_4_building:Alan_B._Miller_Hall"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_train_143",
+      "group_id": "ont_4_building:Alan_B._Miller_Hall"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_train_148",
+      "group_id": "ont_4_building:Alan_B._Miller_Hall"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_train_31",
+      "group_id": "ont_4_building:300_North_LaSalle"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_train_138",
+      "group_id": "ont_5_athlete:Akeem_Priestley"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_train_171",
+      "group_id": "ont_5_athlete:Aaron_Boogaard"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_train_172",
+      "group_id": "ont_5_athlete:Abel_Hernández"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_train_181",
+      "group_id": "ont_5_athlete:Aleksandr_Prudnikov"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_train_64",
+      "group_id": "ont_5_athlete:Al_Kharaitiyat_SC"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_train_88",
+      "group_id": "ont_5_athlete:Aleksandr_Prudnikov"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_train_162",
+      "group_id": "ont_11_meanoftransportation:Detroit"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_train_199",
+      "group_id": "ont_11_meanoftransportation:Pontiac"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_train_25",
+      "group_id": "ont_11_meanoftransportation:ALCO_RS-3"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_train_45",
+      "group_id": "ont_11_meanoftransportation:AMC_Matador"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_train_67",
+      "group_id": "ont_11_meanoftransportation:Acura_TLX"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_train_76",
+      "group_id": "ont_11_meanoftransportation:Alfa_Romeo_164"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_train_19",
+      "group_id": "ont_8_celestialbody:1000_Piazzia"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_train_2",
+      "group_id": "ont_8_celestialbody:(15788)_1993_SB"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_train_41",
+      "group_id": "ont_8_celestialbody:103_Hera"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_train_51",
+      "group_id": "ont_8_celestialbody:107_Camilla"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_train_72",
+      "group_id": "ont_8_celestialbody:109_Felicitas"
+    },
+    {
+      "split": "dev",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_train_80",
+      "group_id": "ont_8_celestialbody:10_Hygiea"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_test_10",
+      "group_id": "ont_3_airport:Afonso_Pena_International_Airport"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_test_17",
+      "group_id": "ont_3_airport:Agra_Airport"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_test_18",
+      "group_id": "ont_3_airport:Agra_Airport"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_test_19",
+      "group_id": "ont_3_airport:Agra_Airport"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_test_22",
+      "group_id": "ont_3_airport:Agra_Airport"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_test_23",
+      "group_id": "ont_3_airport:Agra_Airport"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_test_24",
+      "group_id": "ont_3_airport:Alderney_Airport"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_test_27",
+      "group_id": "ont_3_airport:Alderney_Airport"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_test_28",
+      "group_id": "ont_3_airport:Alderney_Airport"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_test_34",
+      "group_id": "ont_3_airport:Alpena_County_Regional_Airport"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_test_36",
+      "group_id": "ont_3_airport:Alpena_County_Regional_Airport"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_test_43",
+      "group_id": "ont_3_airport:Angola_International_Airport"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_test_44",
+      "group_id": "ont_3_airport:Angola_International_Airport"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_test_46",
+      "group_id": "ont_3_airport:Ardmore_Airport_(New_Zealand)"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_test_53",
+      "group_id": "ont_3_airport:Athens"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_test_54",
+      "group_id": "ont_3_airport:Athens_International_Airport"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_test_63",
+      "group_id": "ont_3_airport:Ardmore_Airport_(New_Zealand)"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_test_66",
+      "group_id": "ont_3_airport:Adirondack_Regional_Airport"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_test_67",
+      "group_id": "ont_3_airport:Adirondack_Regional_Airport"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_3_airport",
+      "id": "ont_3_airport_test_68",
+      "group_id": "ont_3_airport:Adirondack_Regional_Airport"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_test_16",
+      "group_id": "ont_4_building:250_Delaware_Avenue"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_test_19",
+      "group_id": "ont_4_building:320_South_Boston_Building"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_test_27",
+      "group_id": "ont_4_building:3Arena"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_test_28",
+      "group_id": "ont_4_building:3Arena"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_test_37",
+      "group_id": "ont_4_building:Adisham_Hall"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_test_38",
+      "group_id": "ont_4_building:Adisham_Hall"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_test_42",
+      "group_id": "ont_4_building:Adisham_Hall"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_test_46",
+      "group_id": "ont_4_building:Adisham_Hall"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_test_51",
+      "group_id": "ont_4_building:Amdavad_ni_Gufa"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_test_57",
+      "group_id": "ont_4_building:Ampara_Hospital"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_test_61",
+      "group_id": "ont_4_building:Asilomar_Conference_Grounds"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_test_65",
+      "group_id": "ont_4_building:Asilomar_Conference_Grounds"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_test_67",
+      "group_id": "ont_4_building:Asilomar_Conference_Grounds"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_test_69",
+      "group_id": "ont_4_building:Asilomar_Conference_Grounds"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_test_7",
+      "group_id": "ont_4_building:11_Diagonal_Street"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_test_76",
+      "group_id": "ont_4_building:Addis_Ababa"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_test_77",
+      "group_id": "ont_4_building:Amdavad_ni_Gufa"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_test_78",
+      "group_id": "ont_4_building:Amdavad_ni_Gufa"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_test_79",
+      "group_id": "ont_4_building:Amdavad_ni_Gufa"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_4_building",
+      "id": "ont_4_building_test_91",
+      "group_id": "ont_4_building:11_Diagonal_Street"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_test_100",
+      "group_id": "ont_5_athlete:Akeem_Ayers"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_test_105",
+      "group_id": "ont_5_athlete:Aleksandre_Guruli"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_test_107",
+      "group_id": "ont_5_athlete:Alex_Plante"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_test_14",
+      "group_id": "ont_5_athlete:Ahmad_Kadhim_Assad"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_test_16",
+      "group_id": "ont_5_athlete:Ahmad_Kadhim_Assad"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_test_21",
+      "group_id": "ont_5_athlete:Ahmad_Kadhim_Assad"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_test_22",
+      "group_id": "ont_5_athlete:Akeem_Ayers"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_test_23",
+      "group_id": "ont_5_athlete:Akeem_Ayers"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_test_26",
+      "group_id": "ont_5_athlete:Akeem_Ayers"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_test_32",
+      "group_id": "ont_5_athlete:Akeem_Ayers"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_test_33",
+      "group_id": "ont_5_athlete:Akeem_Ayers"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_test_39",
+      "group_id": "ont_5_athlete:Alan_Martin_(footballer)"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_test_41",
+      "group_id": "ont_5_athlete:Alan_Martin_(footballer)"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_test_44",
+      "group_id": "ont_5_athlete:Alan_Martin_(footballer)"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_test_50",
+      "group_id": "ont_5_athlete:Aleksandre_Guruli"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_test_54",
+      "group_id": "ont_5_athlete:Aleksandre_Guruli"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_test_64",
+      "group_id": "ont_5_athlete:Akeem_Ayers"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_test_66",
+      "group_id": "ont_5_athlete:Aaron_Hunt"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_test_7",
+      "group_id": "ont_5_athlete:Aaron_Hunt"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_5_athlete",
+      "id": "ont_5_athlete_test_76",
+      "group_id": "ont_5_athlete:Piotr_Hallmann"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_test_19",
+      "group_id": "ont_11_meanoftransportation:AIDAstella"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_test_23",
+      "group_id": "ont_11_meanoftransportation:AIDAstella"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_test_29",
+      "group_id": "ont_11_meanoftransportation:Aleksey_Chirikov_(icebreaker)"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_test_30",
+      "group_id": "ont_11_meanoftransportation:Aleksey_Chirikov_(icebreaker)"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_test_32",
+      "group_id": "ont_11_meanoftransportation:Aleksey_Chirikov_(icebreaker)"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_test_38",
+      "group_id": "ont_11_meanoftransportation:Alhambra"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_test_44",
+      "group_id": "ont_11_meanoftransportation:Alhambra"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_test_45",
+      "group_id": "ont_11_meanoftransportation:Alhambra"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_test_52",
+      "group_id": "ont_11_meanoftransportation:Ariane_5"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_test_53",
+      "group_id": "ont_11_meanoftransportation:Ariane_5"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_test_58",
+      "group_id": "ont_11_meanoftransportation:Audi_A1"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_test_6",
+      "group_id": "ont_11_meanoftransportation:AIDA_Cruises"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_test_62",
+      "group_id": "ont_11_meanoftransportation:Audi"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_test_64",
+      "group_id": "ont_11_meanoftransportation:Audi"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_test_70",
+      "group_id": "ont_11_meanoftransportation:AIDAluna"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_test_73",
+      "group_id": "ont_11_meanoftransportation:Ariane_5"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_test_74",
+      "group_id": "ont_11_meanoftransportation:Aleksey_Chirikov_(icebreaker)"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_test_79",
+      "group_id": "ont_11_meanoftransportation:A-Rosa_Luna"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_test_85",
+      "group_id": "ont_11_meanoftransportation:Aleksey_Chirikov_(icebreaker)"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_11_meanoftransportation",
+      "id": "ont_11_meanoftransportation_test_86",
+      "group_id": "ont_11_meanoftransportation:Alhambra"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_test_1",
+      "group_id": "ont_8_celestialbody:(19255)_1994_VK8"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_test_10",
+      "group_id": "ont_8_celestialbody:(66391)_1999_KW4"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_test_17",
+      "group_id": "ont_8_celestialbody:1036_Ganymed"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_test_21",
+      "group_id": "ont_8_celestialbody:1036_Ganymed"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_test_22",
+      "group_id": "ont_8_celestialbody:1089_Tama"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_test_24",
+      "group_id": "ont_8_celestialbody:1089_Tama"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_test_25",
+      "group_id": "ont_8_celestialbody:1089_Tama"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_test_27",
+      "group_id": "ont_8_celestialbody:1089_Tama"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_test_29",
+      "group_id": "ont_8_celestialbody:1089_Tama"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_test_31",
+      "group_id": "ont_8_celestialbody:110_Lydia"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_test_34",
+      "group_id": "ont_8_celestialbody:110_Lydia"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_test_41",
+      "group_id": "ont_8_celestialbody:1147_Stavropolis"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_test_48",
+      "group_id": "ont_8_celestialbody:1147_Stavropolis"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_test_49",
+      "group_id": "ont_8_celestialbody:1147_Stavropolis"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_test_50",
+      "group_id": "ont_8_celestialbody:1147_Stavropolis"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_test_53",
+      "group_id": "ont_8_celestialbody:1147_Stavropolis"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_test_54",
+      "group_id": "ont_8_celestialbody:1147_Stavropolis"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_test_6",
+      "group_id": "ont_8_celestialbody:(19255)_1994_VK8"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_test_71",
+      "group_id": "ont_8_celestialbody:1036_Ganymed"
+    },
+    {
+      "split": "eval",
+      "ontology": "ont_8_celestialbody",
+      "id": "ont_8_celestialbody_test_9",
+      "group_id": "ont_8_celestialbody:(66391)_1999_KW4"
+    }
+  ]
+}
