@@ -42,8 +42,10 @@ class CallLogger:
 
         `fn` returns (result, usage). On an exception a failed record is written
         and the exception is raised again, so the caller decides about retries.
+        Metadata is validated first: invalid metadata never calls `fn`.
         """
         started = datetime.now(UTC)
+        self._check_metadata(started, locals())  # reject bad metadata before fn()
         t0 = perf_counter()
         try:
             result, usage = fn()
@@ -52,6 +54,39 @@ class CallLogger:
             raise
         self._log(started, t0, Status.OK, usage, None, locals())
         return result
+
+    def _record(
+        self,
+        started: datetime,
+        finished: datetime,
+        latency_s: float,
+        status: Status,
+        usage: Usage,
+        error_type: str | None,
+        ctx: dict[str, object],
+    ) -> CallRecord:
+        return CallRecord(
+            run_id=self.run_id,
+            document_id=str(ctx["document_id"]),
+            chunk_id=str(ctx["chunk_id"]),
+            method=str(ctx["method"]),
+            node=str(ctx["node"]),
+            stage=Stage(str(ctx["stage"])),
+            call_id=str(ctx["call_id"]),
+            attempt=int(str(ctx["attempt"])),
+            model_id=str(ctx["model_id"]),
+            prompt_version=str(ctx["prompt_version"]),
+            started_at=started,
+            finished_at=finished,
+            latency_s=latency_s,
+            usage=usage,
+            status=status,
+            error_type=error_type,
+        )
+
+    def _check_metadata(self, started: datetime, ctx: dict[str, object]) -> None:
+        """Build a throwaway record so invalid metadata fails before the model is called."""
+        self._record(started, started, 0.0, Status.OK, Usage(), None, ctx)
 
     def _log(
         self,
@@ -62,23 +97,7 @@ class CallLogger:
         error_type: str | None,
         ctx: dict[str, object],
     ) -> None:
-        self.write(
-            CallRecord(
-                run_id=self.run_id,
-                document_id=str(ctx["document_id"]),
-                chunk_id=str(ctx["chunk_id"]),
-                method=str(ctx["method"]),
-                node=str(ctx["node"]),
-                stage=Stage(str(ctx["stage"])),
-                call_id=str(ctx["call_id"]),
-                attempt=int(str(ctx["attempt"])),
-                model_id=str(ctx["model_id"]),
-                prompt_version=str(ctx["prompt_version"]),
-                started_at=started,
-                finished_at=datetime.now(UTC),
-                latency_s=perf_counter() - t0,
-                usage=usage,
-                status=status,
-                error_type=error_type,
-            )
+        record = self._record(
+            started, datetime.now(UTC), perf_counter() - t0, status, usage, error_type, ctx
         )
+        self.write(record)
