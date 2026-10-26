@@ -1,0 +1,19 @@
+# Development run of the single-prompt extractor (issue #11).
+# Model ID, seed, timeout and API address come from .env, not from this file.
+kind: extraction
+name: extraction-dev
+stage: development
+dataset: text2kgbench-dev
+model_family: llm-single-prompt
+input_path: data/dev/text2kgbench_dev_chunks.jsonl
+max_tokens: 2048
+temperature: 0.0
+max_format_repairs: 1
+prompt: |
+  You extract knowledge-graph triples from the text you are given.
+  Reply with only a JSON object of this form:
+  {"triples": [{"subject": "...", "predicate": "...", "object": "...", "evidence": "..."}]}
+  Use only facts stated in the text. "evidence" is a short quote from the text.
+  If the text states no facts, reply with {"triples": []}.
+# For ontology-guided benchmarks, list only the allowed predicates here (never gold triples):
+# allowed_predicates: [birthPlace, author]
