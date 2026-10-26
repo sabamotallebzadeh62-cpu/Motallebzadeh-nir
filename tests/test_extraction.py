@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from types import SimpleNamespace
 from typing import Any, cast
 
@@ -203,3 +204,37 @@ def test_ontology_schema_goes_into_prompt() -> None:
 def test_build_client_needs_base_url() -> None:
     with pytest.raises(ValueError, match="LLM_BASE_URL"):
         build_client(Settings(llm_base_url=""))
+
+
+def test_zero_repairs_means_one_call_and_no_retry() -> None:
+    client, comps = make_client([response("bad")])
+    record = extract(client, CHUNK, replace(CFG, max_format_repairs=0), settings())
+    assert record.result.status is Status.FAILED
+    assert record.failure_kind is FailureKind.INVALID_JSON
+    assert record.attempts == 1
+    assert record.raw_responses == ("bad",)
+    assert len(comps.calls) == 1
+
+
+def test_zero_repairs_still_accepts_a_valid_first_answer() -> None:
+    client, comps = make_client([response(GOOD)])
+    record = extract(client, CHUNK, replace(CFG, max_format_repairs=0), settings())
+    assert record.result.status is Status.OK
+    assert record.attempts == 1
+    assert len(comps.calls) == 1
+
+
+def test_two_repairs_allow_three_calls() -> None:
+    client, comps = make_client([response("bad"), response("worse"), response(GOOD)])
+    record = extract(client, CHUNK, replace(CFG, max_format_repairs=2), settings())
+    assert record.result.status is Status.OK
+    assert record.attempts == 3
+    assert record.raw_responses == ("bad", "worse", GOOD)
+    assert len(comps.calls) == 3
+
+
+def test_negative_repairs_is_rejected_before_any_call() -> None:
+    client, comps = make_client([])
+    with pytest.raises(ValueError, match="max_format_repairs"):
+        extract(client, CHUNK, replace(CFG, max_format_repairs=-1), settings())
+    assert comps.calls == []

@@ -70,6 +70,7 @@ class ExtractionConfig:
     model_family: str = "llm-single-prompt"
     max_tokens: int = 2048
     temperature: float = 0.0
+    max_format_repairs: int = 1  # 0 = no format-repair retry
     allowed_predicates: tuple[str, ...] = ()
 
     @classmethod
@@ -202,15 +203,18 @@ def _failed(
 def extract(
     client: OpenAI, chunk: Chunk, cfg: ExtractionConfig, settings: Settings
 ) -> ExtractionRecord:
-    """Extract triples from one chunk with at most one format-repair retry."""
+    """Extract triples from one chunk with at most cfg.max_format_repairs format-repair retries."""
     messages: list[ChatCompletionMessageParam] = [
         {"role": "system", "content": cfg.system_prompt()},
         {"role": "user", "content": chunk.text},
     ]
+    if cfg.max_format_repairs < 0:
+        raise ValueError("max_format_repairs must be >= 0")
+    last_attempt = cfg.max_format_repairs + 1
     raws: list[str] = []
     total: Usage | None = None
 
-    for attempt in (1, 2):
+    for attempt in range(1, last_attempt + 1):
         try:
             response = client.chat.completions.create(
                 model=settings.extractor_model,
@@ -249,7 +253,7 @@ def extract(
         try:
             triples = parse_triples(chunk.document_id, raw)
         except ParseError as exc:
-            if attempt == 2:
+            if attempt == last_attempt:
                 return _failed(chunk, settings, raws, total, exc.kind, str(exc), attempt)
             messages.append({"role": "assistant", "content": raw})
             messages.append({"role": "user", "content": REPAIR_MESSAGE.format(problem=exc)})

@@ -8,6 +8,7 @@ model_family: llm-single-prompt
 input_path: data/dev/text2kgbench_dev_chunks.jsonl
 max_tokens: 2048
 temperature: 0.0
+max_format_repairs: 1
 prompt: |
   You extract knowledge-graph triples from the text you are given.
   Reply with only a JSON object of this form:
