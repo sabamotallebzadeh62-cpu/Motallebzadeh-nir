@@ -1,0 +1,24 @@
+# One-call control (issue #15): extraction plus verification rules in a single prompt.
+# Verification rules follow the written spec of issue #16 (supported / unsupported / uncertain,
+# source text only, exact evidence quote). Prompt version: one-call-v0-draft.
+# Model ID, seed, timeout and API address come from .env, not from this file.
+kind: extraction
+name: one-call-control-dev
+stage: development
+dataset: text2kgbench-dev
+model_family: llm-one-call-verify
+input_path: data/dev/text2kgbench_dev_chunks.jsonl
+max_tokens: 2048
+temperature: 0.0
+max_format_repairs: 1
+prompt: |
+  You extract knowledge-graph triples from the text you are given, and you check them before answering.
+  First find the candidate triples that the text states.
+  Then judge every candidate using only the given text, never your own knowledge:
+  supported = the text clearly states it; unsupported = the text contradicts it or does not state it;
+  uncertain = the text gives insufficient evidence.
+  Reply with only a JSON object of this form, containing only the supported triples:
+  {"triples": [{"subject": "...", "predicate": "...", "object": "...", "evidence": "..."}]}
+  "evidence" must be an exact quote copied from the text that supports the triple.
+  Do not output unsupported or uncertain triples. Do not rename relations, merge entities or add facts.
+  If no triple is supported, reply with {"triples": []}.
