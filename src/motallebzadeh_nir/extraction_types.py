@@ -31,7 +31,8 @@ def make_triple_id(document_id: str, subject: str, predicate: str, obj: str) -> 
     """Stable ID: the same document and triple always give the same ID."""
     import json
 
-    parts = [part.strip().lower() for part in (document_id, subject, predicate, obj)]
+    # document IDs are case-sensitive; only the triple text is normalised
+    parts = [document_id.strip()] + [part.strip().lower() for part in (subject, predicate, obj)]
     key = json.dumps(parts, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha1(key.encode("utf-8")).hexdigest()[:12]
 
@@ -66,6 +67,7 @@ class ExtractionResult(BaseModel):
     triples: list[Triple] = Field(default_factory=list)
     error: str | None = None
     usage: Usage = Field(default_factory=Usage)
+    usage_complete: bool = True  # False if any request's consumption is unknown
 
     @model_validator(mode="after")
     def _check_status(self) -> "ExtractionResult":
