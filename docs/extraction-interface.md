@@ -1,6 +1,6 @@
 # Extraction interface
 
-Status: schemas and configuration are done. Live API access is not yet verified.
+Status: schemas and configuration are done. Live API access was checked on 2026-11-06 (see the access matrix).
 
 ## Credentials and settings
 
@@ -45,12 +45,21 @@ Model IDs, the seed (`SEED`), the timeout, the retry limit, and generation contr
 
 ## Access matrix
 
-Not filled yet. Live access has not been verified.
+Checked on 2026-11-06 with one short plain-text request per model through the lab LiteLLM
+gateway (`LLM_BASE_URL`, key in the local `.env`). Prompt: "Reply with the single word: ok".
+Model IDs carry the `iairlab/` prefix in the gateway.
 
-| Role | Model ID | Available | Structured response | Usage fields | Blocker |
+| Role | Model ID | Available | Usage fields | Tokens used (in + out) | Blocker or note |
 | --- | --- | --- | --- | --- | --- |
-| Extractor | `qwen2.5-72b` | unknown | unknown | unknown | waiting for access from the curator |
-| Judge | `gpt-oss-120b` | unknown | unknown | unknown | waiting for access from the curator |
+| Extractor (roadmap) | `iairlab/qwen2.5-72b` | no | n/a | 0 | Listed in `/v1/models` but `/chat/completions` returns "Invalid model name". |
+| Extractor (fallback) | `iairlab/qwen3.8-27b` | yes | yes | 59 + 25 = 84 | Suggested by Aleksandr Voskresenskii in Telegram on 2026-11-06; written confirmation from the curator is pending. Not the roadmap model. |
+| Judge | `iairlab/gpt-oss-120b` | yes | yes | 76 + 42 = 118 | None. |
+| Small model | `iairlab/qwen3-32b` | yes | yes | 15 + 50 = 65 and 15 + 89 = 104 | Reasoning model: with `max_tokens` 50 the content was empty (`finish_reason: length`); it answered with `max_tokens` 500. |
 
-Until access is confirmed, the schemas are tested with mocked responses only.
-A mock is not evidence of live access.
+Total used by these checks: 371 tokens, counted toward the first-month cap.
+
+Not tested yet: structured (JSON) output, context limits and generation controls. The checks
+only show that each model answers a plain request and reports usage.
+
+The extractor change from `qwen2.5-72b` to `qwen3.8-27b` is a recorded blocker, not a silent
+substitution. Results from the fallback must not be described as 72B results.
