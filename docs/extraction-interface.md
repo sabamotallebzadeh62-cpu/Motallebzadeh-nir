@@ -1,6 +1,6 @@
 # Extraction interface
 
-Status: schemas and configuration are done. Live API access is not yet verified.
+Status: schemas and configuration are done. Live API access was checked on 2026-11-06 and 2026-11-07 (see the access matrix); structured output is not tested yet.
 
 ## Credentials and settings
 
@@ -45,12 +45,13 @@ Model IDs, the seed (`SEED`), the timeout, the retry limit, and generation contr
 
 ## Access matrix
 
-Not filled yet. Live access has not been verified.
+Checked on 2026-11-06 and 2026-11-07 through the lab LiteLLM gateway (one short request per model, `LLM_BASE_URL=https://api.duckduck.cloud/v1`). Model IDs carry the `iairlab/` prefix. Structured (JSON) output has not been tested yet.
 
 | Role | Model ID | Available | Structured response | Usage fields | Blocker |
 | --- | --- | --- | --- | --- | --- |
-| Extractor | `qwen2.5-72b` | unknown | unknown | unknown | waiting for access from the curator |
-| Judge | `gpt-oss-120b` | unknown | unknown | unknown | waiting for access from the curator |
+| Extractor (roadmap) | `iairlab/qwen2.5-72b` | listed in `/v1/models`, chat fails | not tested | not tested | chat request returns "Invalid model name" (HTTP 400); reported to the lab |
+| Extractor (proposed replacement) | `iairlab/qwen3.8-27b` | yes | not tested | yes | reasoning model; change pending curator confirmation |
+| Judge | `iairlab/gpt-oss-120b` | yes | not tested | yes (prompt, completion, total tokens) | reasoning model: needs a large `max_tokens` (with 10 the content was empty) |
+| Small model (proposed, replaces local Qwen3-8B) | `iairlab/qwen3-32b` | yes | not tested | yes | reasoning model; no T4 access; change pending curator confirmation |
 
-Until access is confirmed, the schemas are tested with mocked responses only.
-A mock is not evidence of live access.
+Changes marked "proposed" are not approved yet. Mocked responses are not evidence of live access.
