@@ -56,7 +56,7 @@ def make_client(replies: list[Any]) -> tuple[OpenAI, FakeCompletions]:
 
 
 def settings() -> Settings:
-    return Settings(llm_base_url="http://fake")
+    return Settings(llm_base_url="http://fake", llm_max_retries=2)
 
 
 def test_parse_valid() -> None:
@@ -160,17 +160,17 @@ def test_extract_api_error_is_recorded() -> None:
 
 
 def test_api_error_after_reported_usage_is_marked_incomplete() -> None:
-    client, comps = make_client(
-        [response("oops", tokens=(10, 5)), openai.APITimeoutError(request=cast(Any, None))]
-    )
+    timeout = openai.APITimeoutError(request=cast(Any, None))
+    client, comps = make_client([response("oops", tokens=(10, 5)), timeout, timeout, timeout])
     record = extract(client, CHUNK, CFG, settings())
     assert record.result.status is Status.FAILED
     assert record.failure_kind is FailureKind.API_ERROR
-    assert record.attempts == 2
-    assert record.result.usage.input_tokens == 10
-    assert record.result.usage.output_tokens == 5
+    # one answered request plus the first timeout and two bounded transport retries
+    assert record.attempts == 4
+    assert record.reported_tokens == (10, 5)
+    assert record.n_unknown_usage == 3
     assert record.result.usage_complete is False
-    assert len(comps.calls) == 2
+    assert len(comps.calls) == 4
 
 
 def test_usage_is_complete_when_every_request_reported() -> None:
