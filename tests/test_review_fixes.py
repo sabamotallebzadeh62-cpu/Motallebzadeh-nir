@@ -48,7 +48,7 @@ def test_repair_retries_count_attempts_not_chunks() -> None:
         run(["bad", GOOD], repairs=1),  # 2 attempts, 1 repair
         run(["bad", "worse", GOOD], repairs=2),  # 3 attempts, 2 repairs
     ]
-    assert summarize(records)["n_repair_retries"] == 3
+    assert summarize(records)["n_format_repair_retries"] == 3
 
 
 def test_document_ids_that_differ_only_in_case_get_different_triple_ids() -> None:

@@ -3,6 +3,7 @@
 Input: one JSON object per line with `document_id`, `chunk_id` and `text`. Other keys are
 ignored, so gold triples stored beside the text never reach the prompt.
 Every chunk gets exactly one line in the raw log (ok, empty or failed); none is dropped.
+Every HTTP attempt and its token usage is kept in the raw log line of its chunk.
 The raw log goes to `<data_dir>/logs/<run_id>/`, which git ignores.
 """
 
@@ -20,6 +21,7 @@ from openai import OpenAI
 
 from motallebzadeh_nir.config import Settings
 from motallebzadeh_nir.extraction import (
+    AttemptKind,
     ExtractionConfig,
     ExtractionRecord,
     FailureKind,
@@ -63,10 +65,19 @@ def read_chunks(path: Path) -> list[Chunk]:
 
 
 def record_to_dict(record: ExtractionRecord) -> dict[str, Any]:
-    """One raw-log line: the result plus the raw answers, failure kind and attempts."""
+    """One raw-log line: the result plus the raw answers, failure kind and every attempt."""
     data: dict[str, Any] = record.result.model_dump(mode="json")
     data["failure_kind"] = record.failure_kind.value if record.failure_kind else None
     data["attempts"] = record.attempts
+    data["attempt_log"] = [
+        {
+            "kind": a.kind.value,
+            "input_tokens": a.usage.input_tokens,
+            "output_tokens": a.usage.output_tokens,
+            "error": a.error,
+        }
+        for a in record.attempt_log
+    ]
     data["raw_responses"] = list(record.raw_responses)
     return data
 
@@ -74,22 +85,24 @@ def record_to_dict(record: ExtractionRecord) -> dict[str, Any]:
 def summarize(records: list[ExtractionRecord]) -> dict[str, float]:
     """Counts for MLflow. Unknown token usage is counted apart, never added as 0."""
     kinds = Counter(r.failure_kind.value for r in records if r.failure_kind is not None)
-    unknown = sum(
-        not r.result.usage_complete
-        or r.result.usage.input_tokens is None
-        or r.result.usage.output_tokens is None
-        for r in records
-    )
+    unknown = sum(not r.result.usage_complete for r in records)
     metrics: dict[str, float] = {
         "n_chunks": len(records),
         "n_ok": sum(r.result.status is Status.OK for r in records),
         "n_empty": sum(r.result.status is Status.OK and not r.result.triples for r in records),
         "n_failed": sum(r.result.status is Status.FAILED for r in records),
         "n_triples": sum(len(r.result.triples) for r in records),
-        "n_repair_retries": sum(max(r.attempts - 1, 0) for r in records),
+        "n_http_attempts": sum(r.attempts for r in records),
+        "n_transport_errors": sum(
+            sum(a.kind is AttemptKind.TRANSPORT_ERROR for a in r.attempt_log) for r in records
+        ),
+        "n_format_repair_retries": sum(
+            max(sum(a.kind is AttemptKind.RESPONSE for a in r.attempt_log) - 1, 0) for r in records
+        ),
         "n_unknown_usage": unknown,
-        "input_tokens_reported": sum(r.result.usage.input_tokens or 0 for r in records),
-        "output_tokens_reported": sum(r.result.usage.output_tokens or 0 for r in records),
+        "n_unknown_usage_attempts": sum(r.n_unknown_usage for r in records),
+        "input_tokens_reported": sum(r.reported_tokens[0] for r in records),
+        "output_tokens_reported": sum(r.reported_tokens[1] for r in records),
     }
     for kind in FailureKind:
         metrics[f"n_failed_{kind.value}"] = kinds.get(kind.value, 0)
@@ -131,7 +144,8 @@ def run_extraction(
                 "temperature": cfg.temperature,
                 "max_format_repairs": cfg.max_format_repairs,
                 "timeout_s": settings.llm_timeout_s,
-                "sdk_max_retries": settings.llm_max_retries,
+                "sdk_max_retries": 0,
+                "transport_max_retries": settings.llm_max_retries,
                 "prompt_sha256": prompt_sha,
                 "input_sha256": input_sha,
                 "input_bytes": len(input_bytes),
@@ -154,7 +168,8 @@ def run_extraction(
             "temperature": cfg.temperature,
             "max_format_repairs": cfg.max_format_repairs,
             "timeout_s": settings.llm_timeout_s,
-            "sdk_max_retries": settings.llm_max_retries,
+            "sdk_max_retries": 0,
+            "transport_max_retries": settings.llm_max_retries,
             "allowed_predicates": list(cfg.allowed_predicates),
             "prompt_sha256": prompt_sha,
             "system_prompt": cfg.system_prompt(),

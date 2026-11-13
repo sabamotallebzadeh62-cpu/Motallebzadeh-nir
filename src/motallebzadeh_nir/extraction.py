@@ -2,13 +2,15 @@
 
 The extractor does not raise for a bad model answer. It returns a record that says what
 happened: ok (the graph may be empty) or failed with a reason (truncated, invalid_json,
-invalid_schema, api_error). The raw answers and the number of attempts are always kept.
+invalid_schema, api_error). The raw answers, every HTTP attempt and its token usage are
+always kept.
 """
 
 from __future__ import annotations
 
 import json
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -37,6 +39,8 @@ REPAIR_MESSAGE = (
 
 _FENCE = re.compile(r"^```(?:json)?\s*(.*?)\s*```$", re.DOTALL)
 
+_RETRYABLE = (openai.APIConnectionError, openai.RateLimitError, openai.InternalServerError)
+
 
 class FailureKind(StrEnum):
     """Why an extraction failed. A successful empty extraction is not a failure."""
@@ -53,6 +57,22 @@ class ParseError(Exception):
     def __init__(self, kind: FailureKind, message: str) -> None:
         super().__init__(message)
         self.kind = kind
+
+
+class AttemptKind(StrEnum):
+    """One HTTP request: it got a reply, or it failed before a usable reply."""
+
+    RESPONSE = "response"
+    TRANSPORT_ERROR = "transport_error"
+
+
+@dataclass(frozen=True)
+class AttemptRecord:
+    """One HTTP request. A request that failed in transport has unknown usage."""
+
+    kind: AttemptKind
+    usage: Usage
+    error: str | None = None
 
 
 @dataclass(frozen=True)
@@ -97,7 +117,18 @@ class ExtractionRecord:
     result: ExtractionResult
     raw_responses: tuple[str, ...]
     failure_kind: FailureKind | None
-    attempts: int
+    attempts: int  # all HTTP requests, including transport retries
+    attempt_log: tuple[AttemptRecord, ...] = ()
+
+    @property
+    def reported_tokens(self) -> tuple[int, int]:
+        """Known subtotal (input, output) over all attempts; unknown parts add nothing."""
+        return reported_tokens(self.attempt_log)
+
+    @property
+    def n_unknown_usage(self) -> int:
+        """Number of attempts whose input or output usage is unknown."""
+        return n_unknown_usage(self.attempt_log)
 
 
 def build_client(settings: Settings) -> OpenAI:
@@ -108,7 +139,7 @@ def build_client(settings: Settings) -> OpenAI:
         base_url=settings.llm_base_url,
         api_key=settings.llm_api_key.get_secret_value() or "missing",
         timeout=settings.llm_timeout_s,
-        max_retries=settings.llm_max_retries,
+        max_retries=0,  # no hidden SDK retries: extract() retries and logs every request
     )
 
 
@@ -171,6 +202,28 @@ def add_usage(first: Usage, second: Usage) -> Usage:
     )
 
 
+def total_usage(log: Sequence[AttemptRecord]) -> Usage:
+    """Total over all attempts; a component is unknown if any attempt left it unknown."""
+    if not log:
+        return Usage()
+    total = log[0].usage
+    for attempt in log[1:]:
+        total = add_usage(total, attempt.usage)
+    return total
+
+
+def reported_tokens(log: Sequence[AttemptRecord]) -> tuple[int, int]:
+    """Known subtotal (input, output): only what providers actually reported."""
+    known_in = sum(a.usage.input_tokens or 0 for a in log)
+    known_out = sum(a.usage.output_tokens or 0 for a in log)
+    return known_in, known_out
+
+
+def n_unknown_usage(log: Sequence[AttemptRecord]) -> int:
+    """Number of attempts whose input or output token count is unknown."""
+    return sum(1 for a in log if a.usage.input_tokens is None or a.usage.output_tokens is None)
+
+
 def _usage(response: ChatCompletion) -> Usage:
     raw = response.usage
     if raw is None:
@@ -182,11 +235,9 @@ def _failed(
     chunk: Chunk,
     settings: Settings,
     raws: list[str],
-    usage: Usage | None,
+    log: list[AttemptRecord],
     kind: FailureKind,
     message: str,
-    attempts: int,
-    usage_complete: bool = True,
 ) -> ExtractionRecord:
     result = ExtractionResult(
         document_id=chunk.document_id,
@@ -194,67 +245,67 @@ def _failed(
         model_id=settings.extractor_model,
         status=Status.FAILED,
         error=f"{kind.value}: {message}",
-        usage=usage or Usage(),
-        usage_complete=usage_complete,
+        usage=total_usage(log),
+        usage_complete=n_unknown_usage(log) == 0,
     )
-    return ExtractionRecord(result, tuple(raws), kind, attempts)
+    return ExtractionRecord(result, tuple(raws), kind, len(log), tuple(log))
 
 
 def extract(
     client: OpenAI, chunk: Chunk, cfg: ExtractionConfig, settings: Settings
 ) -> ExtractionRecord:
-    """Extract triples from one chunk with at most cfg.max_format_repairs format-repair retries."""
+    """Extract triples from one chunk.
+
+    Bounds: at most cfg.max_format_repairs format-repair retries, and for every request
+    at most settings.llm_max_retries transport retries. Every HTTP request is logged.
+    """
     messages: list[ChatCompletionMessageParam] = [
         {"role": "system", "content": cfg.system_prompt()},
         {"role": "user", "content": chunk.text},
     ]
     if cfg.max_format_repairs < 0:
         raise ValueError("max_format_repairs must be >= 0")
-    last_attempt = cfg.max_format_repairs + 1
+    last_format_attempt = cfg.max_format_repairs + 1
     raws: list[str] = []
-    total: Usage | None = None
+    log: list[AttemptRecord] = []
 
-    for attempt in range(1, last_attempt + 1):
-        try:
-            response = client.chat.completions.create(
-                model=settings.extractor_model,
-                messages=messages,
-                max_tokens=cfg.max_tokens,
-                temperature=cfg.temperature,
-                seed=settings.seed,
-            )
-        except openai.OpenAIError as exc:
-            message = f"{type(exc).__name__}: {exc}"
-            return _failed(
-                chunk,
-                settings,
-                raws,
-                total,
-                FailureKind.API_ERROR,
-                message,
-                attempt,
-                usage_complete=False,
-            )
+    for format_attempt in range(1, last_format_attempt + 1):
+        transport_retries = 0
+        while True:
+            try:
+                response = client.chat.completions.create(
+                    model=settings.extractor_model,
+                    messages=messages,
+                    max_tokens=cfg.max_tokens,
+                    temperature=cfg.temperature,
+                    seed=settings.seed,
+                )
+                break
+            except _RETRYABLE as exc:
+                message = f"{type(exc).__name__}: {exc}"
+                log.append(AttemptRecord(AttemptKind.TRANSPORT_ERROR, Usage(), message))
+                if transport_retries >= settings.llm_max_retries:
+                    return _failed(chunk, settings, raws, log, FailureKind.API_ERROR, message)
+                transport_retries += 1
+            except openai.OpenAIError as exc:
+                message = f"{type(exc).__name__}: {exc}"
+                log.append(AttemptRecord(AttemptKind.TRANSPORT_ERROR, Usage(), message))
+                return _failed(chunk, settings, raws, log, FailureKind.API_ERROR, message)
 
-        used = _usage(response)
-        total = used if total is None else add_usage(total, used)
+        log.append(AttemptRecord(AttemptKind.RESPONSE, _usage(response)))
         if not response.choices:
-            return _failed(
-                chunk, settings, raws, total, FailureKind.API_ERROR, "no choices", attempt
-            )
+            return _failed(chunk, settings, raws, log, FailureKind.API_ERROR, "no choices")
         choice = response.choices[0]
         raw = choice.message.content or ""
         raws.append(raw)
 
         if choice.finish_reason == "length":
-            return _failed(
-                chunk, settings, raws, total, FailureKind.TRUNCATED, "hit max_tokens", attempt
-            )
+            return _failed(chunk, settings, raws, log, FailureKind.TRUNCATED, "hit max_tokens")
         try:
             triples = parse_triples(chunk.document_id, raw)
         except ParseError as exc:
-            if attempt == last_attempt:
-                return _failed(chunk, settings, raws, total, exc.kind, str(exc), attempt)
+            if format_attempt == last_format_attempt:
+                return _failed(chunk, settings, raws, log, exc.kind, str(exc))
             messages.append({"role": "assistant", "content": raw})
             messages.append({"role": "user", "content": REPAIR_MESSAGE.format(problem=exc)})
             continue
@@ -265,8 +316,9 @@ def extract(
             model_id=settings.extractor_model,
             status=Status.OK,
             triples=triples,
-            usage=total,
+            usage=total_usage(log),
+            usage_complete=n_unknown_usage(log) == 0,
         )
-        return ExtractionRecord(result, tuple(raws), None, attempt)
+        return ExtractionRecord(result, tuple(raws), None, len(log), tuple(log))
 
     raise AssertionError("unreachable: the loop always returns")
