@@ -2,12 +2,15 @@
 # Verification rules follow the written spec of issue #16 (supported / unsupported / uncertain,
 # source text only, exact evidence quote). Prompt version: one-call-v0-draft.
 # Model ID, seed, timeout and API address come from .env, not from this file.
+# Input: the output of scripts/prepare_text2kgbench.py (id, text, ontology); contract one_call
+# keeps the original IDs and accepts a triple only with a nonempty quote of the source text.
 kind: extraction
 name: one-call-control-dev
 stage: development
 dataset: text2kgbench-dev
 model_family: llm-one-call-verify
-input_path: data/dev/text2kgbench_dev_chunks.jsonl
+input_path: data/prepared/text2kgbench/dev_inputs.jsonl
+contract: one_call
 max_tokens: 2048
 temperature: 0.0
 max_format_repairs: 1

@@ -1,7 +1,9 @@
 """Run the single-prompt extractor over a JSONL file of chunks and log the run to MLflow.
 
-Input: one JSON object per line with `document_id`, `chunk_id` and `text`. Other keys are
-ignored, so gold triples stored beside the text never reach the prompt.
+Input: one JSON object per line with `document_id`, `chunk_id` and `text` (contract
+"baseline"), or the data-preparation output with `id`, `text` and `ontology` (contract
+"one_call"). Other keys are ignored in the first format and rejected in the second, so gold
+triples stored beside the text never reach the prompt.
 Every chunk gets exactly one line in the raw log (ok, empty or failed); none is dropped.
 Every HTTP attempt and its token usage is kept in the raw log line of its chunk.
 The raw log goes to `<data_dir>/logs/<run_id>/`, which git ignores.
@@ -29,6 +31,7 @@ from motallebzadeh_nir.extraction import (
     extract,
 )
 from motallebzadeh_nir.extraction_types import Chunk, Status
+from motallebzadeh_nir.one_call import parse_one_call, read_prepared_inputs
 from motallebzadeh_nir.pipeline import current_commit
 
 
@@ -117,7 +120,14 @@ def run_extraction(
     pr: str = "pending",
 ) -> ExtractionRunResult:
     """Extract every chunk, keep every raw answer, and record the run in MLflow."""
-    chunks = read_chunks(Path(cfg.input_path))
+    if cfg.contract == "one_call":
+        chunks = read_prepared_inputs(Path(cfg.input_path))
+        parser = parse_one_call
+    elif cfg.contract == "baseline":
+        chunks = read_chunks(Path(cfg.input_path))
+        parser = None
+    else:
+        raise ValueError(f"unknown contract {cfg.contract!r}: use 'baseline' or 'one_call'")
     api = client if client is not None else build_client(settings)
 
     mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
@@ -143,6 +153,7 @@ def run_extraction(
                 "max_tokens": cfg.max_tokens,
                 "temperature": cfg.temperature,
                 "max_format_repairs": cfg.max_format_repairs,
+                "contract": cfg.contract,
                 "timeout_s": settings.llm_timeout_s,
                 "sdk_max_retries": 0,
                 "transport_max_retries": settings.llm_max_retries,
@@ -167,6 +178,7 @@ def run_extraction(
             "max_tokens": cfg.max_tokens,
             "temperature": cfg.temperature,
             "max_format_repairs": cfg.max_format_repairs,
+            "contract": cfg.contract,
             "timeout_s": settings.llm_timeout_s,
             "sdk_max_retries": 0,
             "transport_max_retries": settings.llm_max_retries,
@@ -186,7 +198,7 @@ def run_extraction(
         records: list[ExtractionRecord] = []
         with raw_path.open("w", encoding="utf-8") as fh:
             for chunk in chunks:
-                record = extract(api, chunk, cfg, settings)
+                record = extract(api, chunk, cfg, settings, parser)
                 fh.write(json.dumps(record_to_dict(record), ensure_ascii=False) + "\n")
                 fh.flush()
                 records.append(record)

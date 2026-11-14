@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 import re
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -92,6 +92,7 @@ class ExtractionConfig:
     temperature: float = 0.0
     max_format_repairs: int = 1  # 0 = no format-repair retry
     allowed_predicates: tuple[str, ...] = ()
+    contract: str = "baseline"  # "baseline" or "one_call": the input reader and the answer rules
 
     @classmethod
     def from_yaml(cls, path: Path) -> ExtractionConfig:
@@ -190,6 +191,11 @@ def parse_triples(document_id: str, raw: str) -> list[Triple]:
     return list(triples.values())
 
 
+def _default_parser(document_id: str, raw: str, source_text: str) -> list[Triple]:
+    """The baseline contract: evidence is optional, the source text is not checked."""
+    return parse_triples(document_id, raw)
+
+
 def _add(first: int | None, second: int | None) -> int | None:
     return None if first is None or second is None else first + second
 
@@ -252,12 +258,18 @@ def _failed(
 
 
 def extract(
-    client: OpenAI, chunk: Chunk, cfg: ExtractionConfig, settings: Settings
+    client: OpenAI,
+    chunk: Chunk,
+    cfg: ExtractionConfig,
+    settings: Settings,
+    parser: Callable[[str, str, str], list[Triple]] | None = None,
 ) -> ExtractionRecord:
     """Extract triples from one chunk.
 
     Bounds: at most cfg.max_format_repairs format-repair retries, and for every request
     at most settings.llm_max_retries transport retries. Every HTTP request is logged.
+    `parser(document_id, raw_answer, source_text)` defines which answers are accepted; the
+    default is the baseline contract (evidence optional).
     """
     messages: list[ChatCompletionMessageParam] = [
         {"role": "system", "content": cfg.system_prompt()},
@@ -268,6 +280,7 @@ def extract(
     last_format_attempt = cfg.max_format_repairs + 1
     raws: list[str] = []
     log: list[AttemptRecord] = []
+    parse = parser if parser is not None else _default_parser
 
     for format_attempt in range(1, last_format_attempt + 1):
         transport_retries = 0
@@ -302,7 +315,7 @@ def extract(
         if choice.finish_reason == "length":
             return _failed(chunk, settings, raws, log, FailureKind.TRUNCATED, "hit max_tokens")
         try:
-            triples = parse_triples(chunk.document_id, raw)
+            triples = parse(chunk.document_id, raw, chunk.text)
         except ParseError as exc:
             if format_attempt == last_format_attempt:
                 return _failed(chunk, settings, raws, log, exc.kind, str(exc))
