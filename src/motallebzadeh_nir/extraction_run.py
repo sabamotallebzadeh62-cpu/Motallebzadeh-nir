@@ -1,0 +1,217 @@
+"""Run the single-prompt extractor over a JSONL file of chunks and log the run to MLflow.
+
+Input: one JSON object per line with `document_id`, `chunk_id` and `text` (contract
+"baseline"), or the data-preparation output with `id`, `text` and `ontology` (contract
+"one_call"). Other keys are ignored in the first format and rejected in the second, so gold
+triples stored beside the text never reach the prompt.
+Every chunk gets exactly one line in the raw log (ok, empty or failed); none is dropped.
+Every HTTP attempt and its token usage is kept in the raw log line of its chunk.
+The raw log goes to `<data_dir>/logs/<run_id>/`, which git ignores.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+from collections import Counter
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+import mlflow
+from openai import OpenAI
+
+from motallebzadeh_nir.config import Settings
+from motallebzadeh_nir.extraction import (
+    AttemptKind,
+    ExtractionConfig,
+    ExtractionRecord,
+    FailureKind,
+    build_client,
+    extract,
+)
+from motallebzadeh_nir.extraction_types import Chunk, Status
+from motallebzadeh_nir.one_call import parse_one_call, read_prepared_inputs
+from motallebzadeh_nir.pipeline import current_commit
+
+
+@dataclass(frozen=True)
+class ExtractionRunResult:
+    run_id: str
+    n_chunks: int
+    n_ok: int
+    n_empty: int
+    n_failed: int
+    raw_path: Path
+
+
+def read_chunks(path: Path) -> list[Chunk]:
+    """Read chunks from JSONL. A bad line or a repeated ID stops the run with its line number."""
+    chunks: list[Chunk] = []
+    seen: set[tuple[str, str]] = set()
+    with path.open(encoding="utf-8") as fh:
+        for number, line in enumerate(fh, start=1):
+            if not line.strip():
+                continue
+            try:
+                chunk = Chunk.model_validate_json(line)
+            except ValueError as exc:
+                raise ValueError(f"{path}:{number}: invalid chunk: {exc}") from exc
+            key = (chunk.document_id, chunk.chunk_id)
+            if key in seen:
+                raise ValueError(f"{path}:{number}: duplicate chunk {key}")
+            seen.add(key)
+            chunks.append(chunk)
+    if not chunks:
+        raise ValueError(f"{path}: no chunks found")
+    return chunks
+
+
+def record_to_dict(record: ExtractionRecord) -> dict[str, Any]:
+    """One raw-log line: the result plus the raw answers, failure kind and every attempt."""
+    data: dict[str, Any] = record.result.model_dump(mode="json")
+    data["failure_kind"] = record.failure_kind.value if record.failure_kind else None
+    data["attempts"] = record.attempts
+    data["attempt_log"] = [
+        {
+            "kind": a.kind.value,
+            "input_tokens": a.usage.input_tokens,
+            "output_tokens": a.usage.output_tokens,
+            "error": a.error,
+        }
+        for a in record.attempt_log
+    ]
+    data["raw_responses"] = list(record.raw_responses)
+    return data
+
+
+def summarize(records: list[ExtractionRecord]) -> dict[str, float]:
+    """Counts for MLflow. Unknown token usage is counted apart, never added as 0."""
+    kinds = Counter(r.failure_kind.value for r in records if r.failure_kind is not None)
+    unknown = sum(not r.result.usage_complete for r in records)
+    metrics: dict[str, float] = {
+        "n_chunks": len(records),
+        "n_ok": sum(r.result.status is Status.OK for r in records),
+        "n_empty": sum(r.result.status is Status.OK and not r.result.triples for r in records),
+        "n_failed": sum(r.result.status is Status.FAILED for r in records),
+        "n_triples": sum(len(r.result.triples) for r in records),
+        "n_http_attempts": sum(r.attempts for r in records),
+        "n_transport_errors": sum(
+            sum(a.kind is AttemptKind.TRANSPORT_ERROR for a in r.attempt_log) for r in records
+        ),
+        "n_format_repair_retries": sum(
+            max(sum(a.kind is AttemptKind.RESPONSE for a in r.attempt_log) - 1, 0) for r in records
+        ),
+        "n_unknown_usage": unknown,
+        "n_unknown_usage_attempts": sum(r.n_unknown_usage for r in records),
+        "input_tokens_reported": sum(r.reported_tokens[0] for r in records),
+        "output_tokens_reported": sum(r.reported_tokens[1] for r in records),
+    }
+    for kind in FailureKind:
+        metrics[f"n_failed_{kind.value}"] = kinds.get(kind.value, 0)
+    return metrics
+
+
+def run_extraction(
+    cfg: ExtractionConfig,
+    settings: Settings,
+    config_path: Path | None = None,
+    client: OpenAI | None = None,
+    pr: str = "pending",
+) -> ExtractionRunResult:
+    """Extract every chunk, keep every raw answer, and record the run in MLflow."""
+    if cfg.contract == "one_call":
+        chunks = read_prepared_inputs(Path(cfg.input_path))
+        parser = parse_one_call
+    elif cfg.contract == "baseline":
+        chunks = read_chunks(Path(cfg.input_path))
+        parser = None
+    else:
+        raise ValueError(f"unknown contract {cfg.contract!r}: use 'baseline' or 'one_call'")
+    api = client if client is not None else build_client(settings)
+
+    mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
+    mlflow.set_experiment(settings.mlflow_experiment_name)
+    with mlflow.start_run(run_name=cfg.name) as run:
+        run_id = str(run.info.run_id)
+        mlflow.set_tags(
+            {
+                "stage": cfg.stage,
+                "dataset": cfg.dataset,
+                "model_family": cfg.model_family,
+                "commit": current_commit(),
+                "pr": pr,
+            }
+        )
+        prompt_sha = hashlib.sha256(cfg.system_prompt().encode("utf-8")).hexdigest()[:12]
+        input_bytes = Path(cfg.input_path).read_bytes()
+        input_sha = hashlib.sha256(input_bytes).hexdigest()
+        mlflow.log_params(
+            {
+                "seed": settings.seed,
+                "model_id": settings.extractor_model,
+                "max_tokens": cfg.max_tokens,
+                "temperature": cfg.temperature,
+                "max_format_repairs": cfg.max_format_repairs,
+                "contract": cfg.contract,
+                "timeout_s": settings.llm_timeout_s,
+                "sdk_max_retries": 0,
+                "transport_max_retries": settings.llm_max_retries,
+                "prompt_sha256": prompt_sha,
+                "input_sha256": input_sha,
+                "input_bytes": len(input_bytes),
+                "input_path": cfg.input_path,
+                "n_allowed_predicates": len(cfg.allowed_predicates),
+            }
+        )
+        if config_path is not None:
+            mlflow.log_artifact(str(config_path))
+        effective = {
+            "name": cfg.name,
+            "stage": cfg.stage,
+            "dataset": cfg.dataset,
+            "model_family": cfg.model_family,
+            "input_path": cfg.input_path,
+            "input_sha256": input_sha,
+            "model_id": settings.extractor_model,
+            "seed": settings.seed,
+            "max_tokens": cfg.max_tokens,
+            "temperature": cfg.temperature,
+            "max_format_repairs": cfg.max_format_repairs,
+            "contract": cfg.contract,
+            "timeout_s": settings.llm_timeout_s,
+            "sdk_max_retries": 0,
+            "transport_max_retries": settings.llm_max_retries,
+            "allowed_predicates": list(cfg.allowed_predicates),
+            "prompt_sha256": prompt_sha,
+            "system_prompt": cfg.system_prompt(),
+        }
+        effective_path = settings.data_dir / "logs" / run_id / "effective_config.json"
+        effective_path.parent.mkdir(parents=True, exist_ok=True)
+        effective_path.write_text(
+            json.dumps(effective, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        mlflow.log_artifact(str(effective_path))
+
+        raw_path = settings.data_dir / "logs" / run_id / "extraction_raw.jsonl"
+        raw_path.parent.mkdir(parents=True, exist_ok=True)
+        records: list[ExtractionRecord] = []
+        with raw_path.open("w", encoding="utf-8") as fh:
+            for chunk in chunks:
+                record = extract(api, chunk, cfg, settings, parser)
+                fh.write(json.dumps(record_to_dict(record), ensure_ascii=False) + "\n")
+                fh.flush()
+                records.append(record)
+
+        metrics = summarize(records)
+        mlflow.log_metrics(metrics)
+        mlflow.log_artifact(str(raw_path))
+
+    return ExtractionRunResult(
+        run_id=run_id,
+        n_chunks=int(metrics["n_chunks"]),
+        n_ok=int(metrics["n_ok"]),
+        n_empty=int(metrics["n_empty"]),
+        n_failed=int(metrics["n_failed"]),
+        raw_path=raw_path,
+    )
